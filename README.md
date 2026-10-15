@@ -117,7 +117,8 @@ only trusts jobs from `quakecstudio/site` running in the matching Environment.
 `environments/github` manages the organization's profile and member defaults
 (`organization.tf`), and the `site`, `infra`, `editor` and `.github`
 repositories: description, homepage (https://www.quakecstudio.com) and
-topics, features (issues on, wiki off, projects on for `editor` only), squash-only
+topics, features (issues on everywhere; wiki, projects and discussions on for
+`editor`; discussions on for `infra`), squash-only
 merges with branch deletion after merge, Dependabot alerts off, `main` as the
 default branch, and a ruleset that blocks deleting or force-pushing it and
 sends merges through a merge queue. Workflows that provide required status
