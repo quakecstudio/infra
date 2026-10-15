@@ -27,15 +27,3 @@ variable "github_secrets" {
   type        = map(string)
   default     = {}
 }
-
-variable "create_github_oidc_provider" {
-  description = "Create the account-wide GitHub Actions OIDC provider. Set false if another environment in this account already created it."
-  type        = bool
-  default     = true
-}
-
-variable "github_oidc_provider_arn" {
-  description = "Existing GitHub Actions OIDC provider ARN, when create_github_oidc_provider is false."
-  type        = string
-  default     = null
-}

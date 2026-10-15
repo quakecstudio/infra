@@ -48,6 +48,7 @@ the ACM certificate.
 | `content_security_policy` | strict self-only   | CSP header value.                                  |
 | `force_destroy`           | `false`            | Allow destroying a non-empty bucket.               |
 | `api_origin`              | `null`             | `{ domain_name, function_name }` for `/api/*`.     |
+| `deploy_role_name`        | `null`             | IAM role to grant upload + invalidation access.    |
 | `tags`                    | `{}`               | Tags for all resources.                            |
 
 ## Outputs

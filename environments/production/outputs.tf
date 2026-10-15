@@ -15,12 +15,7 @@ output "distribution_id" {
 
 output "deploy_role_arn" {
   description = "IAM role for GitHub Actions (GitHub variable AWS_DEPLOY_ROLE_ARN)."
-  value       = module.deploy_role.role_arn
-}
-
-output "github_oidc_provider_arn" {
-  description = "GitHub Actions OIDC provider ARN (reuse in other environments in the same account)."
-  value       = module.deploy_role.oidc_provider_arn
+  value       = data.aws_iam_role.deploy.arn
 }
 
 output "site_url" {

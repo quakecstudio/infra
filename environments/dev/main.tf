@@ -29,6 +29,8 @@ module "site" {
     function_name = module.visit_counter.function_name
   }
   force_destroy = true
+
+  deploy_role_name = data.aws_iam_role.deploy.name
 }
 
 module "visit_counter" {
@@ -36,18 +38,6 @@ module "visit_counter" {
 
   name                 = local.name
   reserved_concurrency = 5
-}
-
-module "deploy_role" {
-  source = "../../modules/github-deploy-role"
-
-  name                 = "${local.name}-site-deploy"
-  github_repository    = var.github_repository
-  github_environment   = local.environment
-  create_oidc_provider = var.create_github_oidc_provider
-  oidc_provider_arn    = var.github_oidc_provider_arn
-  bucket_arn           = module.site.bucket_arn
-  distribution_arn     = module.site.distribution_arn
 }
 
 # Secret values live in SSM so they never appear in tfvars or the repo.
@@ -67,7 +57,7 @@ module "github_environment" {
   # Read by quakecstudio/site's deploy workflow.
   variables = {
     AWS_REGION                 = var.aws_region
-    AWS_DEPLOY_ROLE_ARN        = module.deploy_role.role_arn
+    AWS_DEPLOY_ROLE_ARN        = data.aws_iam_role.deploy.arn
     SITE_BUCKET                = module.site.bucket_name
     CLOUDFRONT_DISTRIBUTION_ID = module.site.distribution_id
     SITE_URL                   = module.site.site_url

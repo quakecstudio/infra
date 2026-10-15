@@ -36,6 +36,11 @@ run "default_domain" {
   }
 
   assert {
+    condition     = length(aws_iam_role_policy.deploy) == 0
+    error_message = "No deploy policy expected without deploy_role_name."
+  }
+
+  assert {
     condition     = aws_s3_bucket_public_access_block.site.restrict_public_buckets
     error_message = "Bucket must block public access."
   }
@@ -98,5 +103,18 @@ run "api_origin" {
   assert {
     condition     = length(aws_lambda_permission.api_url) == 1 && length(aws_lambda_permission.api_invoke) == 1
     error_message = "CloudFront needs both invoke permissions."
+  }
+}
+
+run "deploy_role" {
+  command = plan
+
+  variables {
+    deploy_role_name = "quakecstudio-test-site-deploy"
+  }
+
+  assert {
+    condition     = aws_iam_role_policy.deploy[0].role == "quakecstudio-test-site-deploy"
+    error_message = "Deploy policy should attach to the given role."
   }
 }

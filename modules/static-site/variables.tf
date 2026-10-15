@@ -57,3 +57,9 @@ variable "api_origin" {
   })
   default = null
 }
+
+variable "deploy_role_name" {
+  description = "Optional IAM role (e.g. a GitHub Actions deploy role) to grant upload and invalidation access to this site."
+  type        = string
+  default     = null
+}

@@ -9,18 +9,20 @@ modules/
 ├── static-site/          # S3 bucket + CloudFront (OAC), security headers,
 │                         # optional ACM cert + Route 53 records
 ├── visit-counter/        # Lambda + DynamoDB visitor counter at /api/visit
-├── github-deploy-role/   # IAM role GitHub Actions assumes via OIDC to deploy
+├── github-oidc/          # GitHub Actions OIDC provider + per-environment deploy roles
 ├── github-environment/   # GitHub Environment, deploy branch rules, Actions
 │                         # variables and secrets
 └── github-repository/    # Repository settings, default branch, branch
                           # ruleset, repo-level Actions variables and secrets
 environments/
+├── global/               # account-wide: GitHub OIDC provider and deploy roles
 ├── github/               # settings for every quakecstudio repository
 ├── dev/                  # site + its "dev" GitHub Environment in quakecstudio/site
 └── production/           # site + its "production" GitHub Environment
 ```
 
-Each environment is its own Terraform root with its own state.
+Each environment is its own Terraform root with its own state. Apply
+`global` first: `dev` and `production` look up the deploy roles it creates.
 
 ## Requirements
 
@@ -28,13 +30,19 @@ Each environment is its own Terraform root with its own state.
 - AWS provider ~> 6.0
 - A GitHub token that can administer the `quakecstudio` repositories, in
   `GITHUB_TOKEN` (e.g. `GITHUB_TOKEN=$(gh auth token)`), for every root
+  except `global`
 - An S3 bucket for Terraform state (create it once, by hand or elsewhere;
   enable versioning on it)
 
 ## Usage
 
 ```sh
-cd environments/production
+cd environments/global
+cp backend.hcl.example backend.hcl            # set the state bucket
+terraform init -backend-config=backend.hcl
+terraform apply
+
+cd ../production
 cp backend.hcl.example backend.hcl            # set the state bucket
 cp terraform.tfvars.example terraform.tfvars  # optional settings
 terraform init -backend-config=backend.hcl
@@ -47,16 +55,19 @@ the `site_url` output. To use a custom domain, set `domain_names` and the
 `route53_zone_id` of the hosted zone serving it; the module requests and
 validates an ACM certificate in us-east-1 and creates `A`/`AAAA` aliases.
 
-### GitHub OIDC provider
+### Deploy roles
 
-The GitHub Actions OIDC provider is one per AWS account. If dev and
-production share an account, apply one first (it creates the provider), then
-in the other set:
+`environments/global` creates the account's GitHub Actions OIDC provider and
+one IAM role per GitHub Environment: `quakecstudio-dev-site-deploy` and
+`quakecstudio-production-site-deploy`. Each role only trusts jobs from
+`quakecstudio/site` running in the matching Environment
+(`repo:quakecstudio/site:environment:<env>`) and has no permissions of its own.
+`dev` and `production` look their role up and attach an inline policy that
+allows uploading to their own bucket and invalidating their own distribution,
+and nothing else.
 
-```hcl
-create_github_oidc_provider = false
-github_oidc_provider_arn    = "<github_oidc_provider_arn output from the first>"
-```
+To add an environment, add it to `roles` in `environments/global/main.tf`
+and apply `global` before the new root.
 
 ## Visitor counter
 
@@ -133,5 +144,5 @@ The site deploy itself needs no secrets: it authenticates to AWS with OIDC.
 
 `.github/workflows/terraform.yml` runs `terraform fmt -check` and
 `terraform validate` for each environment, plus `terraform test` for the
-`static-site`, `visit-counter` and `github-repository` modules against mocked providers, on pull requests and
-pushes to `main`. It does not plan or apply against AWS.
+`static-site`, `visit-counter`, `github-oidc` and `github-repository`
+modules against mocked providers, on pull requests and pushes to `main`. It does not plan or apply against AWS.
