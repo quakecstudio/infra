@@ -1,10 +1,10 @@
 variable "name" {
-  description = "Name prefix for all resources, e.g. \"quakecstudio-production\"."
+  description = "Name prefix for all resources, e.g. \"quakecstudio-prod\"."
   type        = string
 }
 
 variable "reserved_concurrency" {
-  description = "Maximum concurrent executions. Caps cost if someone floods the endpoint; excess requests get 429s."
+  description = "Maximum concurrent executions. Caps cost if someone floods the endpoint; excess requests get 429s. null reserves none."
   type        = number
   default     = 5
 }

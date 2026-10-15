@@ -1,15 +1,23 @@
 variable "name" {
-  description = "Name prefix for all resources, e.g. \"quakecstudio-production\"."
+  description = "Name prefix for all resources, e.g. \"quakecstudio-prod\"."
   type        = string
 
   validation {
-    condition     = can(regex("^[a-z0-9][a-z0-9-]{1,40}[a-z0-9]$", var.name))
-    error_message = "name must be 3-42 characters of lowercase letters, digits and hyphens."
+    # Bucket names add up to "-redirect" and the 26-character account-regional
+    # suffix, within S3's 63-character limit.
+    condition     = can(regex("^[a-z0-9][a-z0-9-]{1,26}[a-z0-9]$", var.name))
+    error_message = "name must be 3-28 characters of lowercase letters, digits and hyphens."
   }
 }
 
 variable "domain_names" {
   description = "Custom hostnames for the site (first is primary). Leave empty to use the default *.cloudfront.net domain."
+  type        = list(string)
+  default     = []
+}
+
+variable "redirect_domain_names" {
+  description = "Hostnames that permanently redirect to the first of domain_names through an S3 redirect bucket, e.g. the apex domain. Requires domain_names."
   type        = list(string)
   default     = []
 }

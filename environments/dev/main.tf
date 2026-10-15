@@ -20,8 +20,8 @@ module "site" {
   }
 
   name            = local.name
-  domain_names    = var.domain_names
-  route53_zone_id = var.route53_zone_id
+  domain_names    = ["dev.quakecstudio.com"]
+  route53_zone_id = data.aws_route53_zone.site.zone_id
   price_class     = "PriceClass_100"
 
   api_origin = {
@@ -36,8 +36,11 @@ module "site" {
 module "visit_counter" {
   source = "../../modules/visit-counter"
 
-  name                 = local.name
-  reserved_concurrency = 5
+  name = local.name
+
+  # The account's Lambda concurrency quota is 10, all of which must stay
+  # unreserved. Set back to 5 once the quota increase is granted.
+  reserved_concurrency = null
 }
 
 # Secret values live in SSM so they never appear in tfvars or the repo.

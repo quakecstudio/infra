@@ -7,6 +7,18 @@ mock_provider "aws" {
       json = "{}"
     }
   }
+
+  mock_data "aws_caller_identity" {
+    defaults = {
+      account_id = "123456789012"
+    }
+  }
+
+  mock_data "aws_region" {
+    defaults = {
+      region = "us-east-1"
+    }
+  }
 }
 
 mock_provider "aws" {
@@ -43,6 +55,11 @@ run "default_domain" {
   assert {
     condition     = aws_s3_bucket_public_access_block.site.restrict_public_buckets
     error_message = "Bucket must block public access."
+  }
+
+  assert {
+    condition     = aws_s3_bucket.site.bucket == "quakecstudio-test-123456789012-us-east-1-an" && aws_s3_bucket.site.bucket_namespace == "account-regional"
+    error_message = "Bucket should be named <name>-<account-id>-<region>-an in the account-regional namespace."
   }
 }
 
@@ -117,4 +134,55 @@ run "deploy_role" {
     condition     = aws_iam_role_policy.deploy[0].role == "quakecstudio-test-site-deploy"
     error_message = "Deploy policy should attach to the given role."
   }
+}
+
+run "redirect" {
+  command = plan
+
+  variables {
+    domain_names          = ["www.quakec.example"]
+    redirect_domain_names = ["quakec.example"]
+    route53_zone_id       = "Z0000000000000000000"
+  }
+
+  assert {
+    condition     = aws_s3_bucket_website_configuration.redirect[0].redirect_all_requests_to[0].host_name == "www.quakec.example"
+    error_message = "Redirect should target the primary domain."
+  }
+
+  assert {
+    condition     = aws_s3_bucket_website_configuration.redirect[0].redirect_all_requests_to[0].protocol == "https"
+    error_message = "Redirect should use HTTPS."
+  }
+
+  assert {
+    condition     = aws_s3_bucket.redirect[0].bucket == "quakecstudio-test-redirect-123456789012-us-east-1-an"
+    error_message = "Redirect bucket should be in the account-regional namespace."
+  }
+
+  assert {
+    condition     = aws_s3_bucket_public_access_block.redirect[0].restrict_public_buckets
+    error_message = "Redirect bucket must block public access."
+  }
+
+  assert {
+    condition     = toset(aws_acm_certificate.site[0].subject_alternative_names) == toset(["quakec.example"])
+    error_message = "The certificate should also cover the redirect hostnames."
+  }
+
+  assert {
+    condition     = length(aws_route53_record.redirect) == 2 && length(aws_route53_record.cert_validation) == 2
+    error_message = "A/AAAA aliases and certificate validation expected for the redirect hostname."
+  }
+}
+
+run "redirect_requires_domain" {
+  command = plan
+
+  variables {
+    redirect_domain_names = ["quakec.example"]
+    route53_zone_id       = "Z0000000000000000000"
+  }
+
+  expect_failures = [aws_s3_bucket.redirect]
 }

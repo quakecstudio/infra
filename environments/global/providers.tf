@@ -1,5 +1,6 @@
 provider "aws" {
-  region = var.aws_region
+  profile = "quakecstudio-admin"
+  region  = var.aws_region
 
   default_tags {
     tags = local.tags

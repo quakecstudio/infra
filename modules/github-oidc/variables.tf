@@ -1,5 +1,5 @@
-variable "github_repository" {
-  description = "Repository allowed to assume the roles, as \"owner/repo\"."
+variable "subject_prefix" {
+  description = "Immutable OIDC sub claim prefix of the repository allowed to assume the roles, as \"repo:<owner>@<owner-id>/<repo>@<repo-id>\"."
   type        = string
 }
 

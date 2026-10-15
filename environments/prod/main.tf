@@ -1,6 +1,6 @@
 locals {
   project     = "quakecstudio"
-  environment = "production"
+  environment = "prod"
   name        = "${local.project}-${local.environment}"
 
   tags = {
@@ -19,10 +19,11 @@ module "site" {
     aws.us_east_1 = aws.us_east_1
   }
 
-  name            = local.name
-  domain_names    = var.domain_names
-  route53_zone_id = var.route53_zone_id
-  price_class     = "PriceClass_100"
+  name                  = local.name
+  domain_names          = ["www.quakecstudio.com"]
+  redirect_domain_names = ["quakecstudio.com"]
+  route53_zone_id       = data.aws_route53_zone.site.zone_id
+  price_class           = "PriceClass_100"
 
   api_origin = {
     domain_name   = module.visit_counter.function_url_domain_name
@@ -36,8 +37,11 @@ module "site" {
 module "visit_counter" {
   source = "../../modules/visit-counter"
 
-  name                 = local.name
-  reserved_concurrency = 5
+  name = local.name
+
+  # The account's Lambda concurrency quota is 10, all of which must stay
+  # unreserved. Set back to 5 once the quota increase is granted.
+  reserved_concurrency = null
 }
 
 # Secret values live in SSM so they never appear in tfvars or the repo.
@@ -54,7 +58,7 @@ module "github_environment" {
   repository  = split("/", var.github_repository)[1]
   environment = local.environment
 
-  # Production deploys only from main, after approval by jplock.
+  # prod deploys only from main, after approval by jplock.
   deployment_branches = ["main"]
   reviewer_user_ids   = [49093]
 

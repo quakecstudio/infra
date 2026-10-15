@@ -28,9 +28,11 @@ resource "github_repository" "this" {
   }
 }
 
+# Dependabot alerts are noise for these repositories. Managed explicitly so they
+# stay off instead of following the account default.
 resource "github_repository_vulnerability_alerts" "this" {
   repository = github_repository.this.name
-  enabled    = true
+  enabled    = false
 }
 
 resource "github_branch_default" "this" {
@@ -64,6 +66,15 @@ resource "github_repository_ruleset" "default_branch" {
         required_approving_review_count   = 0
         dismiss_stale_reviews_on_push     = true
         required_review_thread_resolution = true
+      }
+    }
+
+    dynamic "merge_queue" {
+      for_each = var.merge_queue ? [true] : []
+
+      # Squash to match the repository's only allowed merge method.
+      content {
+        merge_method = "SQUASH"
       }
     }
 

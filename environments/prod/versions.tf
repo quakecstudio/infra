@@ -1,6 +1,15 @@
 terraform {
   required_version = ">= 1.10"
 
+  backend "s3" {
+    profile      = "quakecstudio-admin"
+    bucket       = "terraform-state-663345616657-us-east-1-an"
+    key          = "prod/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -15,9 +24,4 @@ terraform {
       version = "~> 6.13"
     }
   }
-
-  # Partial configuration: supply the rest with
-  #   terraform init -backend-config=backend.hcl
-  # (copy backend.hcl.example to backend.hcl and fill it in).
-  backend "s3" {}
 }

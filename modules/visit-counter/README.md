@@ -18,6 +18,7 @@ much a flood of requests can cost; extra requests get throttled.
 Lambda requires at least 10 unreserved concurrent executions to remain in the
 account. New AWS accounts can start with a total quota of 10, in which case
 reserving any fails; request a quota increase (Service Quotas → Lambda →
-Concurrent executions) first.
+Concurrent executions) first, and pass `reserved_concurrency = null` until
+it is granted.
 
 The function's code is `src/index.mjs`; Terraform zips and deploys it.
