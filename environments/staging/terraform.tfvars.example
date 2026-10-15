@@ -1,0 +1,10 @@
+aws_region = "us-east-1"
+
+# Optional custom domain. Leave both unset to use the *.cloudfront.net URL.
+# domain_names    = ["staging.quakec.studio"]
+# route53_zone_id = "Z0123456789ABCDEFGHIJ"
+
+# The GitHub OIDC provider is account-wide. If production already created it
+# in this account, reuse it:
+# create_github_oidc_provider = false
+# github_oidc_provider_arn    = "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"
