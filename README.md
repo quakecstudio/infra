@@ -17,7 +17,7 @@ modules/
 environments/
 ├── global/               # account-wide: quakecstudio.com hosted zone, GitHub
 │                         # OIDC provider and deploy roles
-├── github/               # settings for every quakecstudio repository
+├── github/               # organization profile and every quakecstudio repository
 ├── dev/                  # site + its "dev" GitHub Environment in quakecstudio/site
 └── prod/                 # site + its "prod" GitHub Environment
 ```
@@ -114,15 +114,19 @@ only trusts jobs from `quakecstudio/site` running in the matching Environment.
 
 ### Repositories
 
-`environments/github` manages `site`, `infra` and `editor`: description and
+`environments/github` manages the organization's profile and member defaults
+(`organization.tf`), and the `site`, `infra`, `editor` and `.github`
+repositories: description, homepage (https://www.quakecstudio.com) and
 topics, features (issues on, wiki off, projects on for `editor` only), squash-only
 merges with branch deletion after merge, Dependabot alerts off, `main` as the
 default branch, and a ruleset that blocks deleting or force-pushing it and
 sends merges through a merge queue. Workflows that provide required status
 checks must also run on `merge_group`.
-Removing one from Terraform archives it rather than deleting it.
+Removing one from Terraform archives it rather than deleting it. Changing the
+organization settings needs the `admin:org` token scope:
 
 ```sh
+gh auth refresh -h github.com -s admin:org
 make init ENV=github
 GITHUB_TOKEN=$(gh auth token) make plan ENV=github
 ```
