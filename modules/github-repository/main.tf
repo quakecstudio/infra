@@ -10,11 +10,13 @@ resource "github_repository" "this" {
   has_projects    = var.has_projects
   has_discussions = var.has_discussions
 
-  # Squash merges only; the PR title becomes the commit subject.
+  # Squash merges only; the PR title becomes the commit subject. gh pr merge
+  # adds a PR to the merge queue through auto-merge, which can't bypass the
+  # required queue.
   allow_squash_merge          = true
   allow_merge_commit          = false
   allow_rebase_merge          = false
-  allow_auto_merge            = false
+  allow_auto_merge            = true
   allow_update_branch         = true
   delete_branch_on_merge      = true
   squash_merge_commit_title   = "PR_TITLE"

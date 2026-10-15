@@ -75,3 +75,12 @@ run "merge_queue" {
     error_message = "Merge queue must squash, the only merge method the repository allows."
   }
 }
+
+run "auto_merge" {
+  command = plan
+
+  assert {
+    condition     = github_repository.this.allow_auto_merge
+    error_message = "Auto-merge must be on so gh pr merge can add PRs to the merge queue."
+  }
+}
