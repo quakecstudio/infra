@@ -1,9 +1,19 @@
 # Private origin bucket. Only the CloudFront distribution can read it.
 
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+locals {
+  # Buckets live in the account-regional namespace, which only this account
+  # can create names in: <prefix>-<account-id>-<region>-an.
+  bucket_suffix = "${data.aws_caller_identity.current.account_id}-${data.aws_region.current.region}-an"
+}
+
 resource "aws_s3_bucket" "site" {
-  bucket_prefix = "${var.name}-"
-  force_destroy = var.force_destroy
-  tags          = var.tags
+  bucket           = "${var.name}-${local.bucket_suffix}"
+  bucket_namespace = "account-regional"
+  force_destroy    = var.force_destroy
+  tags             = var.tags
 }
 
 resource "aws_s3_bucket_ownership_controls" "site" {

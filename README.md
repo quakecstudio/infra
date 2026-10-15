@@ -15,14 +15,16 @@ modules/
 └── github-repository/    # Repository settings, default branch, branch
                           # ruleset, repo-level Actions variables and secrets
 environments/
-├── global/               # account-wide: GitHub OIDC provider and deploy roles
+├── global/               # account-wide: quakecstudio.com hosted zone, GitHub
+│                         # OIDC provider and deploy roles
 ├── github/               # settings for every quakecstudio repository
 ├── dev/                  # site + its "dev" GitHub Environment in quakecstudio/site
-└── production/           # site + its "production" GitHub Environment
+└── prod/                 # site + its "prod" GitHub Environment
 ```
 
 Each environment is its own Terraform root with its own state. Apply
-`global` first: `dev` and `production` look up the deploy roles it creates.
+`global` first: `dev` and `prod` look up the deploy roles and hosted zone it
+creates.
 
 ## Requirements
 
@@ -31,38 +33,42 @@ Each environment is its own Terraform root with its own state. Apply
 - A GitHub token that can administer the `quakecstudio` repositories, in
   `GITHUB_TOKEN` (e.g. `GITHUB_TOKEN=$(gh auth token)`), for every root
   except `global`
-- An S3 bucket for Terraform state (create it once, by hand or elsewhere;
-  enable versioning on it)
+- The `quakecstudio-admin` AWS profile
+
+State is stored in the `terraform-state-663345616657-us-east-1-an` S3 bucket
+(us-east-1) under `<environment>/terraform.tfstate`. Both the backend and the
+AWS provider use the `quakecstudio-admin` AWS profile.
 
 ## Usage
 
-```sh
-cd environments/global
-cp backend.hcl.example backend.hcl            # set the state bucket
-terraform init -backend-config=backend.hcl
-terraform apply
+`ENV` selects the environment and defaults to `global`.
 
-cd ../production
-cp backend.hcl.example backend.hcl            # set the state bucket
-cp terraform.tfvars.example terraform.tfvars  # optional settings
-terraform init -backend-config=backend.hcl
-GITHUB_TOKEN=$(gh auth token) terraform plan
-GITHUB_TOKEN=$(gh auth token) terraform apply
+```sh
+make init ENV=global
+make apply ENV=global
+
+make init ENV=prod
+GITHUB_TOKEN=$(gh auth token) make plan ENV=prod
+GITHUB_TOKEN=$(gh auth token) make apply ENV=prod
 ```
 
-Without `domain_names` the site is available at the `*.cloudfront.net` URL in
-the `site_url` output. To use a custom domain, set `domain_names` and the
-`route53_zone_id` of the hosted zone serving it; the module requests and
-validates an ACM certificate in us-east-1 and creates `A`/`AAAA` aliases.
+`global` creates the `quakecstudio.com` Route 53 hosted zone; the registrar
+must use its name servers (the `name_servers` output). `dev` serves
+`dev.quakecstudio.com`: it looks the zone up, and the `static-site` module
+requests and DNS-validates an ACM certificate in us-east-1 and creates
+`A`/`AAAA` aliases. `prod` does the same for `www.quakecstudio.com`, and
+`quakecstudio.com` redirects there (301, path kept) through an S3 bucket with
+redirect-all website hosting behind its own CloudFront distribution for HTTPS.
 
 ### Deploy roles
 
 `environments/global` creates the account's GitHub Actions OIDC provider and
 one IAM role per GitHub Environment: `quakecstudio-dev-site-deploy` and
-`quakecstudio-production-site-deploy`. Each role only trusts jobs from
+`quakecstudio-prod-site-deploy`. Each role only trusts jobs from
 `quakecstudio/site` running in the matching Environment
-(`repo:quakecstudio/site:environment:<env>`) and has no permissions of its own.
-`dev` and `production` look their role up and attach an inline policy that
+(`repo:quakecstudio@343029298/site@1420765651:environment:<env>`, GitHub's
+immutable subject format) and has no permissions of its own.
+`dev` and `prod` look their role up and attach an inline policy that
 allows uploading to their own bucket and invalidating their own distribution,
 and nothing else.
 
@@ -90,7 +96,7 @@ provider; don't change these settings in the GitHub UI.
 
 ### Deploy environments
 
-`dev` and `production` each create the matching GitHub Environment in
+`dev` and `prod` each create the matching GitHub Environment in
 `quakecstudio/site` and set the Actions variables its deploy workflow reads,
 straight from their own resources:
 
@@ -102,23 +108,23 @@ straight from their own resources:
 | `CLOUDFRONT_DISTRIBUTION_ID` | the distribution           |
 | `SITE_URL`                   | the site URL               |
 
-The `production` Environment only accepts deploys from `main`, and each
-production deploy waits for approval from jplock. The deploy role
+The `prod` Environment only accepts deploys from `main`, and each
+prod deploy waits for approval from jplock. The deploy role
 only trusts jobs from `quakecstudio/site` running in the matching Environment.
 
 ### Repositories
 
 `environments/github` manages `site`, `infra` and `editor`: description and
 topics, features (issues on, wiki off, projects on for `editor` only), squash-only
-merges with branch deletion after merge, Dependabot alerts, `main` as the
-default branch, and a ruleset that blocks deleting or force-pushing it. The
-repositories already existed, so `imports.tf` adopts them on the first apply.
+merges with branch deletion after merge, Dependabot alerts off, `main` as the
+default branch, and a ruleset that blocks deleting or force-pushing it and
+sends merges through a merge queue. Workflows that provide required status
+checks must also run on `merge_group`.
 Removing one from Terraform archives it rather than deleting it.
 
 ```sh
-cd environments/github
-terraform init -backend-config=backend.hcl
-GITHUB_TOKEN=$(gh auth token) terraform plan
+make init ENV=github
+GITHUB_TOKEN=$(gh auth token) make plan ENV=github
 ```
 
 ### Secrets
@@ -127,14 +133,14 @@ Secret values live in SSM Parameter Store as `SecureString` parameters, created
 outside Terraform so they never appear in tfvars or the repo:
 
 ```sh
-aws ssm put-parameter --type SecureString \
-  --name /quakecstudio/production/example-token --value '...'
+aws ssm put-parameter --profile quakecstudio-admin --type SecureString \
+  --name /quakecstudio/prod/example-token --value '...'
 ```
 
 Terraform reads them and writes the GitHub secret. Map secret names to
 parameter names in `terraform.tfvars`:
 
-- environment secrets: `github_secrets` in `dev` / `production`
+- environment secrets: `github_secrets` in `dev` / `prod`
 - repository secrets: `repository_secrets` in `github`
 
 The values end up in Terraform state, which is encrypted in the S3 backend.

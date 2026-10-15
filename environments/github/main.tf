@@ -53,6 +53,7 @@ module "repository" {
   has_wiki        = each.value.has_wiki
   has_projects    = each.value.has_projects
   has_discussions = each.value.has_discussions
+  merge_queue     = true
 
   secrets = {
     for key, s in local.secret_parameters : s.name => data.aws_ssm_parameter.secret[key].value

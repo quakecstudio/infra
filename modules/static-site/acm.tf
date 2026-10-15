@@ -3,6 +3,9 @@
 
 locals {
   custom_domain = length(var.domain_names) > 0
+
+  # One certificate covers the site and its redirect hostnames.
+  certificate_names = concat(var.domain_names, var.redirect_domain_names)
 }
 
 resource "aws_acm_certificate" "site" {
@@ -10,7 +13,7 @@ resource "aws_acm_certificate" "site" {
   provider = aws.us_east_1
 
   domain_name               = var.domain_names[0]
-  subject_alternative_names = slice(var.domain_names, 1, length(var.domain_names))
+  subject_alternative_names = slice(local.certificate_names, 1, length(local.certificate_names))
   validation_method         = "DNS"
   tags                      = var.tags
 
@@ -33,7 +36,7 @@ locals {
 }
 
 resource "aws_route53_record" "cert_validation" {
-  for_each = toset(local.custom_domain ? var.domain_names : [])
+  for_each = toset(local.custom_domain ? local.certificate_names : [])
 
   zone_id         = var.route53_zone_id
   name            = local.cert_validation_options[each.key].resource_record_name

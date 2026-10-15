@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  merge_group:
 
 permissions:
   contents: read
@@ -14,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: [global, dev, production, github]
+        environment: [global, dev, prod, github]
     steps:
       - uses: actions/checkout@v4
 

@@ -1,5 +1,6 @@
 provider "aws" {
-  region = var.aws_region
+  profile = "quakecstudio-admin"
+  region  = var.aws_region
 
   default_tags {
     tags = local.tags
@@ -8,8 +9,9 @@ provider "aws" {
 
 # CloudFront certificates must live in us-east-1.
 provider "aws" {
-  alias  = "us_east_1"
-  region = "us-east-1"
+  alias   = "us_east_1"
+  profile = "quakecstudio-admin"
+  region  = "us-east-1"
 
   default_tags {
     tags = local.tags

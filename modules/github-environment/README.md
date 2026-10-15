@@ -8,7 +8,7 @@ module "github_environment" {
   source = "../../modules/github-environment"
 
   repository          = "site"
-  environment         = "production"
+  environment         = "prod"
   deployment_branches = ["main"]   # optional; empty = any branch
   reviewer_user_ids   = []         # optional; GitHub user IDs who must approve
 

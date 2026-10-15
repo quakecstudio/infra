@@ -10,10 +10,10 @@ mock_provider "aws" {
 }
 
 variables {
-  github_repository = "quakecstudio/site"
+  subject_prefix = "repo:quakecstudio@343029298/site@1420765651"
   roles = {
-    dev        = "quakecstudio-dev-site-deploy"
-    production = "quakecstudio-production-site-deploy"
+    dev  = "quakecstudio-dev-site-deploy"
+    prod = "quakecstudio-prod-site-deploy"
   }
 }
 
@@ -26,14 +26,14 @@ run "roles_per_environment" {
   }
 
   assert {
-    condition     = aws_iam_role.deploy["production"].name == "quakecstudio-production-site-deploy"
+    condition     = aws_iam_role.deploy["prod"].name == "quakecstudio-prod-site-deploy"
     error_message = "Role names should come from the roles map."
   }
 
   assert {
     condition = contains(
       flatten([for c in data.aws_iam_policy_document.trust["dev"].statement[0].condition : c.values]),
-      "repo:quakecstudio/site:environment:dev"
+      "repo:quakecstudio@343029298/site@1420765651:environment:dev"
     )
     error_message = "dev role must only trust the dev Environment."
   }

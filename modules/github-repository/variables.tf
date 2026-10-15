@@ -68,6 +68,12 @@ variable "require_pull_request" {
   default     = false
 }
 
+variable "merge_queue" {
+  description = "Require merges to the default branch to go through a merge queue. Required status checks must also run on the merge_group event."
+  type        = bool
+  default     = false
+}
+
 variable "required_status_checks" {
   description = "Status check contexts that must pass before merging to the default branch."
   type        = list(string)

@@ -27,6 +27,11 @@ run "defaults" {
   }
 
   assert {
+    condition     = length(github_repository_ruleset.default_branch[0].rules[0].merge_queue) == 0
+    error_message = "Merge queue should be off by default."
+  }
+
+  assert {
     condition     = github_repository.this.archive_on_destroy
     error_message = "Repositories must be archived, not deleted."
   }
@@ -55,5 +60,18 @@ run "pull_requests_and_secrets" {
   assert {
     condition     = github_actions_variable.this["REGION"].value == "us-east-1"
     error_message = "Variable REGION expected."
+  }
+}
+
+run "merge_queue" {
+  command = plan
+
+  variables {
+    merge_queue = true
+  }
+
+  assert {
+    condition     = github_repository_ruleset.default_branch[0].rules[0].merge_queue[0].merge_method == "SQUASH"
+    error_message = "Merge queue must squash, the only merge method the repository allows."
   }
 }

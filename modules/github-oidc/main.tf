@@ -29,10 +29,12 @@ data "aws_iam_policy_document" "trust" {
       values   = ["sts.amazonaws.com"]
     }
 
+    # Owner and repository IDs, unlike names, can't be reused if the repository
+    # is renamed or deleted and recreated.
     condition {
       test     = "StringEquals"
       variable = "${local.oidc_host}:sub"
-      values   = ["repo:${var.github_repository}:environment:${each.key}"]
+      values   = ["${var.subject_prefix}:environment:${each.key}"]
     }
   }
 }
@@ -41,7 +43,7 @@ resource "aws_iam_role" "deploy" {
   for_each = var.roles
 
   name                 = each.value
-  description          = "GitHub Actions deploys for ${var.github_repository} (${each.key})"
+  description          = "GitHub Actions deploys for ${var.subject_prefix} (${each.key})"
   assume_role_policy   = data.aws_iam_policy_document.trust[each.key].json
   max_session_duration = 3600
   tags                 = var.tags
