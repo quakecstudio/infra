@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: [staging, production]
+        environment: [staging, production, github]
     steps:
       - uses: actions/checkout@v4
 
@@ -42,8 +42,11 @@ jobs:
         with:
           terraform_version: "~1.10"
 
-      - name: Test static-site module (mocked provider)
-        working-directory: modules/static-site
+      - name: Test modules (mocked providers)
         run: |
-          terraform init -input=false
-          terraform test
+          for dir in modules/static-site modules/github-repository; do
+            echo "::group::$dir"
+            terraform -chdir="$dir" init -input=false
+            terraform -chdir="$dir" test
+            echo "::endgroup::"
+          done

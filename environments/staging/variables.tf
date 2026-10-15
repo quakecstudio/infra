@@ -17,9 +17,15 @@ variable "route53_zone_id" {
 }
 
 variable "github_repository" {
-  description = "Repository that deploys the site content."
+  description = "Repository that deploys the site content, as \"owner/repo\"."
   type        = string
   default     = "quakecstudio/site"
+}
+
+variable "github_secrets" {
+  description = "Extra Actions secrets for this GitHub Environment: { SECRET_NAME = \"<SSM SecureString parameter name>\" }."
+  type        = map(string)
+  default     = {}
 }
 
 variable "create_github_oidc_provider" {

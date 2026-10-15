@@ -37,3 +37,32 @@ module "deploy_role" {
   bucket_arn           = module.site.bucket_arn
   distribution_arn     = module.site.distribution_arn
 }
+
+# Secret values live in SSM so they never appear in tfvars or the repo.
+data "aws_ssm_parameter" "github_secret" {
+  for_each = var.github_secrets
+
+  name            = each.value
+  with_decryption = true
+}
+
+module "github_environment" {
+  source = "../../modules/github-environment"
+
+  repository  = split("/", var.github_repository)[1]
+  environment = local.environment
+
+  # Production deploys only from main.
+  deployment_branches = ["main"]
+
+  # Read by quakecstudio/site's deploy workflow.
+  variables = {
+    AWS_REGION                 = var.aws_region
+    AWS_DEPLOY_ROLE_ARN        = module.deploy_role.role_arn
+    SITE_BUCKET                = module.site.bucket_name
+    CLOUDFRONT_DISTRIBUTION_ID = module.site.distribution_id
+    SITE_URL                   = module.site.site_url
+  }
+
+  secrets = { for name, p in data.aws_ssm_parameter.github_secret : name => p.value }
+}

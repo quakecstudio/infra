@@ -8,3 +8,9 @@ aws_region = "us-east-1"
 # in this account, reuse it:
 # create_github_oidc_provider = false
 # github_oidc_provider_arn    = "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"
+
+# Extra Actions secrets for this GitHub Environment, read from SSM SecureString
+# parameters created outside Terraform:
+# github_secrets = {
+#   EXAMPLE_TOKEN = "/quakecstudio/production/example-token"
+# }
