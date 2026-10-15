@@ -1,0 +1,8 @@
+# Repository-level Actions secrets, read from SSM SecureString parameters.
+# Create the parameter first, outside Terraform:
+#   aws ssm put-parameter --type SecureString --name /quakecstudio/github/editor/signing-key --value '...'
+# repository_secrets = {
+#   editor = {
+#     SIGNING_KEY = "/quakecstudio/github/editor/signing-key"
+#   }
+# }

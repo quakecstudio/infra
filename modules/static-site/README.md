@@ -10,6 +10,10 @@ Private S3 bucket + CloudFront distribution for a static website.
   Permissions-Policy) via a response headers policy.
 - A CloudFront Function rewrites `/path/` and `/path` to `/path/index.html`.
 - 403/404 from S3 are served as `/404.html` with status 404.
+- Optional API: a Lambda function URL served uncached at `/api/*`, signed with
+  Lambda origin access control (`api_origin`). The distribution-wide 403/404
+  error pages also apply to `/api/*`, so APIs should avoid those codes for
+  JSON errors.
 - Optional custom domains: ACM certificate (us-east-1, DNS-validated) and
   Route 53 `A`/`AAAA` alias records.
 
@@ -43,6 +47,8 @@ the ACM certificate.
 | `price_class`             | `PriceClass_100`   | CloudFront price class.                            |
 | `content_security_policy` | strict self-only   | CSP header value.                                  |
 | `force_destroy`           | `false`            | Allow destroying a non-empty bucket.               |
+| `api_origin`              | `null`             | `{ domain_name, function_name }` for `/api/*`.     |
+| `deploy_role_name`        | `null`             | IAM role to grant upload + invalidation access.    |
 | `tags`                    | `{}`               | Tags for all resources.                            |
 
 ## Outputs

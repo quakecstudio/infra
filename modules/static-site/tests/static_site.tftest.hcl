@@ -31,6 +31,16 @@ run "default_domain" {
   }
 
   assert {
+    condition     = length(aws_cloudfront_distribution.site.ordered_cache_behavior) == 0 && length(aws_lambda_permission.api_url) == 0
+    error_message = "No API origin expected without api_origin."
+  }
+
+  assert {
+    condition     = length(aws_iam_role_policy.deploy) == 0
+    error_message = "No deploy policy expected without deploy_role_name."
+  }
+
+  assert {
     condition     = aws_s3_bucket_public_access_block.site.restrict_public_buckets
     error_message = "Bucket must block public access."
   }
@@ -68,4 +78,43 @@ run "domain_requires_zone" {
   }
 
   expect_failures = [aws_acm_certificate.site]
+}
+
+run "api_origin" {
+  command = plan
+
+  variables {
+    api_origin = {
+      domain_name   = "abc123.lambda-url.us-east-1.on.aws"
+      function_name = "quakecstudio-test-visit-counter"
+    }
+  }
+
+  assert {
+    condition     = length(aws_cloudfront_origin_access_control.api) == 1
+    error_message = "Lambda origin access control expected."
+  }
+
+  assert {
+    condition     = aws_cloudfront_distribution.site.ordered_cache_behavior[0].path_pattern == "/api/*"
+    error_message = "/api/* behavior expected."
+  }
+
+  assert {
+    condition     = length(aws_lambda_permission.api_url) == 1 && length(aws_lambda_permission.api_invoke) == 1
+    error_message = "CloudFront needs both invoke permissions."
+  }
+}
+
+run "deploy_role" {
+  command = plan
+
+  variables {
+    deploy_role_name = "quakecstudio-test-site-deploy"
+  }
+
+  assert {
+    condition     = aws_iam_role_policy.deploy[0].role == "quakecstudio-test-site-deploy"
+    error_message = "Deploy policy should attach to the given role."
+  }
 }
