@@ -2,28 +2,28 @@ locals {
   repositories = {
     site = {
       description     = "Website for QuakeC Studio, a modern IDE for QuakeC"
-      topics          = ["quake", "quakec", "website"]
+      topics          = ["quake", "quakec", "quake-modding", "website", "static-site", "cloudfront"]
       has_wiki        = false
       has_projects    = false
       has_discussions = false
     }
     infra = {
       description     = "Terraform for QuakeC Studio's AWS and GitHub infrastructure"
-      topics          = ["quake", "quakec", "terraform", "aws"]
+      topics          = ["quake", "quakec", "terraform", "aws", "cloudfront", "github-actions", "infrastructure-as-code"]
       has_wiki        = false
       has_projects    = false
       has_discussions = true
     }
     editor = {
       description     = "QuakeC Studio: a modern IDE for QuakeC, the scripting language of id Software's Quake"
-      topics          = ["quake", "quakec", "editor", "ide"]
-      has_wiki        = false
+      topics          = ["quake", "quakec", "quake-modding", "id-tech", "gamedev", "editor", "ide", "code-editor"]
+      has_wiki        = true
       has_projects    = true
-      has_discussions = false
+      has_discussions = true
     }
     ".github" = {
       description     = "QuakeC Studio organization profile, default community health files and brand assets"
-      topics          = ["quakec"]
+      topics          = ["quake", "quakec", "quake-modding", "community", "github-profile"]
       has_wiki        = false
       has_projects    = false
       has_discussions = false
