@@ -161,6 +161,16 @@ run "redirect" {
   }
 
   assert {
+    condition     = aws_cloudfront_cache_policy.redirect[0].parameters_in_cache_key_and_forwarded_to_origin[0].headers_config[0].header_behavior == "none"
+    error_message = "The redirect origin must not receive the viewer's Host header, or S3 answers NoSuchBucket."
+  }
+
+  assert {
+    condition     = aws_cloudfront_cache_policy.redirect[0].parameters_in_cache_key_and_forwarded_to_origin[0].query_strings_config[0].query_string_behavior == "all"
+    error_message = "The redirect must keep query strings."
+  }
+
+  assert {
     condition     = aws_s3_bucket_public_access_block.redirect[0].restrict_public_buckets
     error_message = "Redirect bucket must block public access."
   }

@@ -62,11 +62,34 @@ resource "aws_s3_bucket_website_configuration" "redirect" {
   }
 }
 
-# Forwards query strings so the redirect keeps them (e.g. ?utm_source=...).
-# S3 sends no Cache-Control on redirects, so CloudFront doesn't cache them.
-data "aws_cloudfront_cache_policy" "query_strings" {
+# Forwards query strings, so the redirect keeps them (e.g. ?utm_source=...),
+# but no headers: S3 website hosting finds the bucket by the Host header, so
+# forwarding the viewer's Host makes S3 answer NoSuchBucket.
+resource "aws_cloudfront_cache_policy" "redirect" {
   count = local.redirect_enabled ? 1 : 0
-  name  = "UseOriginCacheControlHeaders-QueryStrings"
+
+  name        = "${var.name}-redirect"
+  comment     = "Query strings only, for the S3 redirect origin"
+  min_ttl     = 0
+  default_ttl = 86400
+  max_ttl     = 31536000
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    enable_accept_encoding_brotli = false
+    enable_accept_encoding_gzip   = false
+
+    cookies_config {
+      cookie_behavior = "none"
+    }
+
+    headers_config {
+      header_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "all"
+    }
+  }
 }
 
 resource "aws_cloudfront_distribution" "redirect" {
@@ -99,7 +122,7 @@ resource "aws_cloudfront_distribution" "redirect" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = data.aws_cloudfront_cache_policy.query_strings[0].id
+    cache_policy_id        = aws_cloudfront_cache_policy.redirect[0].id
   }
 
   restrictions {
