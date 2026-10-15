@@ -13,7 +13,8 @@ Private S3 bucket + CloudFront distribution for a static website.
 - A CloudFront Function rewrites `/path/` and `/path` to `/path/index.html`.
 - 403/404 from S3 are served as `/404.html` with status 404.
 - Optional `redirect_domain_names` (e.g. the apex) 301 to the primary domain
-  through an S3 redirect-all bucket behind a second distribution.
+  through an S3 redirect-all bucket behind a second distribution, keeping the
+  path and query string.
 - Optional API: a Lambda function URL served uncached at `/api/*`, signed with
   Lambda origin access control (`api_origin`). The distribution-wide 403/404
   error pages also apply to `/api/*`, so APIs should avoid those codes for

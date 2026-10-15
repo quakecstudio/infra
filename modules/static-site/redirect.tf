@@ -62,6 +62,13 @@ resource "aws_s3_bucket_website_configuration" "redirect" {
   }
 }
 
+# Forwards query strings so the redirect keeps them (e.g. ?utm_source=...).
+# S3 sends no Cache-Control on redirects, so CloudFront doesn't cache them.
+data "aws_cloudfront_cache_policy" "query_strings" {
+  count = local.redirect_enabled ? 1 : 0
+  name  = "UseOriginCacheControlHeaders-QueryStrings"
+}
+
 resource "aws_cloudfront_distribution" "redirect" {
   count = local.redirect_enabled ? 1 : 0
 
@@ -92,7 +99,7 @@ resource "aws_cloudfront_distribution" "redirect" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = data.aws_cloudfront_cache_policy.caching_optimized.id
+    cache_policy_id        = data.aws_cloudfront_cache_policy.query_strings[0].id
   }
 
   restrictions {
