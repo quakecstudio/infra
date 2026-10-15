@@ -4,18 +4,21 @@ locals {
       description     = "QuakeC Studio website"
       topics          = ["quake", "quakec", "website"]
       has_wiki        = false
+      has_projects    = false
       has_discussions = false
     }
     infra = {
       description     = "QuakeC Studio infrastructure"
       topics          = ["quake", "quakec", "terraform", "aws"]
       has_wiki        = false
+      has_projects    = false
       has_discussions = true
     }
     editor = {
       description     = "QuakeC Studio editor"
       topics          = ["quake", "quakec", "editor", "ide"]
       has_wiki        = false
+      has_projects    = true
       has_discussions = false
     }
   }
@@ -48,6 +51,7 @@ module "repository" {
   description     = each.value.description
   topics          = each.value.topics
   has_wiki        = each.value.has_wiki
+  has_projects    = each.value.has_projects
   has_discussions = each.value.has_discussions
 
   secrets = {

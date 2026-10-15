@@ -48,3 +48,12 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "api_origin" {
+  description = "Optional Lambda function URL served at /api/* (uncached). CloudFront signs requests with origin access control and is granted permission to invoke the function."
+  type = object({
+    domain_name   = string # function URL hostname, e.g. abc123.lambda-url.us-east-1.on.aws
+    function_name = string
+  })
+  default = null
+}

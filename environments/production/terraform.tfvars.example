@@ -4,7 +4,7 @@ aws_region = "us-east-1"
 # domain_names    = ["quakec.studio", "www.quakec.studio"]
 # route53_zone_id = "Z0123456789ABCDEFGHIJ"
 
-# The GitHub OIDC provider is account-wide. If staging already created it
+# The GitHub OIDC provider is account-wide. If dev already created it
 # in this account, reuse it:
 # create_github_oidc_provider = false
 # github_oidc_provider_arn    = "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"

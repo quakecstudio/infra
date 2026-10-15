@@ -1,7 +1,7 @@
 aws_region = "us-east-1"
 
 # Optional custom domain. Leave both unset to use the *.cloudfront.net URL.
-# domain_names    = ["staging.quakec.studio"]
+# domain_names    = ["dev.quakec.studio"]
 # route53_zone_id = "Z0123456789ABCDEFGHIJ"
 
 # The GitHub OIDC provider is account-wide. If production already created it
@@ -12,5 +12,5 @@ aws_region = "us-east-1"
 # Extra Actions secrets for this GitHub Environment, read from SSM SecureString
 # parameters created outside Terraform:
 # github_secrets = {
-#   EXAMPLE_TOKEN = "/quakecstudio/staging/example-token"
+#   EXAMPLE_TOKEN = "/quakecstudio/dev/example-token"
 # }

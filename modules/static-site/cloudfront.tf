@@ -75,6 +75,23 @@ resource "aws_cloudfront_distribution" "site" {
     origin_access_control_id = aws_cloudfront_origin_access_control.site.id
   }
 
+  dynamic "origin" {
+    for_each = local.api_enabled ? [var.api_origin] : []
+
+    content {
+      origin_id                = local.api_origin_id
+      domain_name              = origin.value.domain_name
+      origin_access_control_id = aws_cloudfront_origin_access_control.api[0].id
+
+      custom_origin_config {
+        http_port              = 80
+        https_port             = 443
+        origin_protocol_policy = "https-only"
+        origin_ssl_protocols   = ["TLSv1.2"]
+      }
+    }
+  }
+
   default_cache_behavior {
     target_origin_id           = "s3-${aws_s3_bucket.site.id}"
     viewer_protocol_policy     = "redirect-to-https"
@@ -87,6 +104,22 @@ resource "aws_cloudfront_distribution" "site" {
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.rewrite_index.arn
+    }
+  }
+
+  dynamic "ordered_cache_behavior" {
+    for_each = local.api_enabled ? [true] : []
+
+    content {
+      path_pattern               = "/api/*"
+      target_origin_id           = local.api_origin_id
+      viewer_protocol_policy     = "redirect-to-https"
+      allowed_methods            = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+      cached_methods             = ["GET", "HEAD"]
+      compress                   = true
+      cache_policy_id            = data.aws_cloudfront_cache_policy.caching_disabled[0].id
+      origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.all_viewer_except_host[0].id
+      response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
     }
   }
 

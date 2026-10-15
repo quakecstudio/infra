@@ -1,6 +1,6 @@
 locals {
   project     = "quakecstudio"
-  environment = "staging"
+  environment = "dev"
   name        = "${local.project}-${local.environment}"
 
   tags = {
@@ -23,7 +23,19 @@ module "site" {
   domain_names    = var.domain_names
   route53_zone_id = var.route53_zone_id
   price_class     = "PriceClass_100"
-  force_destroy   = true
+
+  api_origin = {
+    domain_name   = module.visit_counter.function_url_domain_name
+    function_name = module.visit_counter.function_name
+  }
+  force_destroy = true
+}
+
+module "visit_counter" {
+  source = "../../modules/visit-counter"
+
+  name                 = local.name
+  reserved_concurrency = 5
 }
 
 module "deploy_role" {

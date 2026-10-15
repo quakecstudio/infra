@@ -23,7 +23,19 @@ module "site" {
   domain_names    = var.domain_names
   route53_zone_id = var.route53_zone_id
   price_class     = "PriceClass_100"
-  force_destroy   = false
+
+  api_origin = {
+    domain_name   = module.visit_counter.function_url_domain_name
+    function_name = module.visit_counter.function_name
+  }
+  force_destroy = false
+}
+
+module "visit_counter" {
+  source = "../../modules/visit-counter"
+
+  name                 = local.name
+  reserved_concurrency = 5
 }
 
 module "deploy_role" {
@@ -52,8 +64,9 @@ module "github_environment" {
   repository  = split("/", var.github_repository)[1]
   environment = local.environment
 
-  # Production deploys only from main.
+  # Production deploys only from main, after approval by jplock.
   deployment_branches = ["main"]
+  reviewer_user_ids   = [49093]
 
   # Read by quakecstudio/site's deploy workflow.
   variables = {
