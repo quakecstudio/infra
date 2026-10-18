@@ -13,3 +13,5 @@ override.tf.json
 # Local config (examples are committed)
 *.tfvars
 !*.tfvars.example
+
+.DS_Store
