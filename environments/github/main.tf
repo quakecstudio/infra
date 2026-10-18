@@ -12,7 +12,7 @@ locals {
       topics          = ["quake", "quakec", "terraform", "aws", "cloudfront", "github-actions", "infrastructure-as-code"]
       has_wiki        = false
       has_projects    = false
-      has_discussions = true
+      has_discussions = false
     }
     editor = {
       description     = "QuakeC Studio: a modern IDE for QuakeC, the scripting language of id Software's Quake"
@@ -20,10 +20,37 @@ locals {
       has_wiki        = true
       has_projects    = true
       has_discussions = true
+      required_status_checks = [
+        "Build (linux-aarch64)",
+        "Build (linux-x86_64)",
+        "Build (macos-universal)",
+        "Build (windows-aarch64)",
+        "Build (windows-x86_64)",
+        "cargo xtask ci",
+        "cargo-deny",
+        "Clippy",
+        "Dependency Review",
+        "Format",
+        "Pinned Actions",
+        "Test Assets (linux)",
+        "Test Assets (macos)",
+        "Test Assets (windows)",
+        "Unit Tests (linux)",
+        "Unit Tests (macos)",
+        "Unit Tests (windows)",
+        "zizmor",
+      ]
     }
     ".github" = {
       description     = "QuakeC Studio organization profile, default community health files and brand assets"
       topics          = ["quake", "quakec", "quake-modding", "community", "github-profile"]
+      has_wiki        = false
+      has_projects    = false
+      has_discussions = false
+    }
+    "tree-sitter-quakec" = {
+      description     = "tree-sitter QuakeC grammar"
+      topics          = ["quake", "quakec", "quake-modding"]
       has_wiki        = false
       has_projects    = false
       has_discussions = false
@@ -62,6 +89,8 @@ module "repository" {
   has_projects    = each.value.has_projects
   has_discussions = each.value.has_discussions
   merge_queue     = true
+
+  required_status_checks = lookup(each.value, "required_status_checks", [])
 
   secrets = {
     for key, s in local.secret_parameters : s.name => data.aws_ssm_parameter.secret[key].value

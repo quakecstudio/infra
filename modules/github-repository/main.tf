@@ -61,6 +61,8 @@ resource "github_repository_ruleset" "default_branch" {
     deletion         = true
     non_fast_forward = true
 
+    required_linear_history = var.required_linear_history
+
     dynamic "pull_request" {
       for_each = var.require_pull_request ? [true] : []
 

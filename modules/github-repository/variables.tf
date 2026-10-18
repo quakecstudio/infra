@@ -80,6 +80,12 @@ variable "required_status_checks" {
   default     = []
 }
 
+variable "required_linear_history" {
+  description = "Require a linear history on the default branch (no merge commits)."
+  type        = bool
+  default     = true
+}
+
 variable "secrets" {
   description = "Repository-level Actions secrets, by name. Values are stored (encrypted) in Terraform state."
   type        = map(string)

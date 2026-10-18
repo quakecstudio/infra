@@ -76,6 +76,15 @@ run "merge_queue" {
   }
 }
 
+run "linear_history" {
+  command = plan
+
+  assert {
+    condition     = github_repository_ruleset.default_branch[0].rules[0].required_linear_history
+    error_message = "Linear history should be required by default."
+  }
+}
+
 run "auto_merge" {
   command = plan
 
