@@ -54,6 +54,9 @@ locals {
       has_wiki        = false
       has_projects    = false
       has_discussions = false
+      required_status_checks = [
+        "tree-sitter test",
+      ]
     }
   }
 
