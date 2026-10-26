@@ -93,3 +93,23 @@ run "auto_merge" {
     error_message = "Auto-merge must be on so gh pr merge can add PRs to the merge queue."
   }
 }
+
+run "private_without_auto_merge" {
+  command = plan
+
+  variables {
+    visibility             = "private"
+    protect_default_branch = false
+    allow_auto_merge       = false
+  }
+
+  assert {
+    condition     = !github_repository.this.allow_auto_merge
+    error_message = "Auto-merge must be configurable off for private repositories on GitHub Free."
+  }
+
+  assert {
+    condition     = length(github_repository_ruleset.default_branch) == 0
+    error_message = "No ruleset expected when protect_default_branch is false."
+  }
+}

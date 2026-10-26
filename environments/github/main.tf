@@ -65,8 +65,9 @@ locals {
       has_wiki        = false
       has_projects    = false
       has_discussions = false
-      # Rulesets need a paid plan on private repositories.
+      # Rulesets and auto-merge need a paid plan on private repositories.
       protect_default_branch = false
+      allow_auto_merge       = false
     }
   }
 
@@ -104,6 +105,7 @@ module "repository" {
   has_discussions        = each.value.has_discussions
   merge_queue            = true
   protect_default_branch = lookup(each.value, "protect_default_branch", true)
+  allow_auto_merge       = lookup(each.value, "allow_auto_merge", true)
 
   required_status_checks = lookup(each.value, "required_status_checks", [])
 

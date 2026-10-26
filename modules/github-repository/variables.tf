@@ -98,3 +98,9 @@ variable "variables" {
   type        = map(string)
   default     = {}
 }
+
+variable "allow_auto_merge" {
+  description = "Allow auto-merge, which gh pr merge uses to add a PR to the merge queue. GitHub Free only supports it on public repositories."
+  type        = bool
+  default     = true
+}
