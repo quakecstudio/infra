@@ -58,6 +58,16 @@ locals {
         "tree-sitter test",
       ]
     }
+    kb = {
+      description     = "Knowledge base of how QuakeC Studio was built, mined from agent sessions across its repositories"
+      topics          = ["quake", "quakec", "knowledge-base"]
+      visibility      = "private"
+      has_wiki        = false
+      has_projects    = false
+      has_discussions = false
+      # Rulesets need a paid plan on private repositories.
+      protect_default_branch = false
+    }
   }
 
   # Flatten repository => { name => parameter } for the SSM lookups.
@@ -84,14 +94,16 @@ module "repository" {
   source   = "../../modules/github-repository"
   for_each = local.repositories
 
-  name            = each.key
-  description     = each.value.description
-  homepage_url    = "https://www.quakecstudio.com"
-  topics          = each.value.topics
-  has_wiki        = each.value.has_wiki
-  has_projects    = each.value.has_projects
-  has_discussions = each.value.has_discussions
-  merge_queue     = true
+  name                   = each.key
+  description            = each.value.description
+  homepage_url           = "https://www.quakecstudio.com"
+  topics                 = each.value.topics
+  visibility             = lookup(each.value, "visibility", "public")
+  has_wiki               = each.value.has_wiki
+  has_projects           = each.value.has_projects
+  has_discussions        = each.value.has_discussions
+  merge_queue            = true
+  protect_default_branch = lookup(each.value, "protect_default_branch", true)
 
   required_status_checks = lookup(each.value, "required_status_checks", [])
 
