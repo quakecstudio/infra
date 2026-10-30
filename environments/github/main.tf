@@ -13,6 +13,14 @@ locals {
       has_wiki        = false
       has_projects    = false
       has_discussions = false
+      # Pull requests instead of a merge queue; admins can bypass.
+      merge_queue          = false
+      require_pull_request = true
+      bypass_actors = [
+        { actor_type = "OrganizationAdmin", bypass_mode = "always" },
+        # Repository role 5 is the built-in admin role.
+        { actor_type = "RepositoryRole", actor_id = 5, bypass_mode = "always" },
+      ]
     }
     editor = {
       description     = "QuakeC Studio: a modern IDE for QuakeC, the scripting language of id Software's Quake"
