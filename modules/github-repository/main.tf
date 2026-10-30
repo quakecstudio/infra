@@ -57,6 +57,16 @@ resource "github_repository_ruleset" "default_branch" {
     }
   }
 
+  dynamic "bypass_actors" {
+    for_each = var.bypass_actors
+
+    content {
+      actor_type  = bypass_actors.value.actor_type
+      actor_id    = bypass_actors.value.actor_id
+      bypass_mode = bypass_actors.value.bypass_mode
+    }
+  }
+
   rules {
     deletion         = true
     non_fast_forward = true
@@ -68,8 +78,9 @@ resource "github_repository_ruleset" "default_branch" {
 
       content {
         required_approving_review_count   = 0
-        dismiss_stale_reviews_on_push     = true
-        required_review_thread_resolution = true
+        dismiss_stale_reviews_on_push     = false
+        required_review_thread_resolution = false
+        allowed_merge_methods             = ["squash"]
       }
     }
 

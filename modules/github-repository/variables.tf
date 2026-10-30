@@ -104,3 +104,13 @@ variable "allow_auto_merge" {
   type        = bool
   default     = true
 }
+
+variable "bypass_actors" {
+  description = "Actors that can bypass the default-branch ruleset. Leave actor_id null for actor types without an ID, such as OrganizationAdmin."
+  type = list(object({
+    actor_type  = string
+    actor_id    = optional(number)
+    bypass_mode = string
+  }))
+  default = []
+}

@@ -20,6 +20,14 @@ locals {
       has_wiki        = true
       has_projects    = true
       has_discussions = true
+      # Pull requests instead of a merge queue; admins can bypass.
+      merge_queue          = false
+      require_pull_request = true
+      bypass_actors = [
+        { actor_type = "OrganizationAdmin", bypass_mode = "always" },
+        # Repository role 5 is the built-in admin role.
+        { actor_type = "RepositoryRole", actor_id = 5, bypass_mode = "always" },
+      ]
       required_status_checks = [
         "Build (linux-aarch64)",
         "Build (linux-x86_64)",
@@ -103,7 +111,9 @@ module "repository" {
   has_wiki               = each.value.has_wiki
   has_projects           = each.value.has_projects
   has_discussions        = each.value.has_discussions
-  merge_queue            = true
+  merge_queue            = lookup(each.value, "merge_queue", true)
+  require_pull_request   = lookup(each.value, "require_pull_request", false)
+  bypass_actors          = lookup(each.value, "bypass_actors", [])
   protect_default_branch = lookup(each.value, "protect_default_branch", true)
   allow_auto_merge       = lookup(each.value, "allow_auto_merge", true)
 

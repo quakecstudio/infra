@@ -32,6 +32,11 @@ run "defaults" {
   }
 
   assert {
+    condition     = length(github_repository_ruleset.default_branch[0].bypass_actors) == 0
+    error_message = "No bypass actors by default."
+  }
+
+  assert {
     condition     = github_repository.this.archive_on_destroy
     error_message = "Repositories must be archived, not deleted."
   }
@@ -111,5 +116,32 @@ run "private_without_auto_merge" {
   assert {
     condition     = length(github_repository_ruleset.default_branch) == 0
     error_message = "No ruleset expected when protect_default_branch is false."
+  }
+}
+
+run "bypass_actors" {
+  command = plan
+
+  variables {
+    require_pull_request = true
+    bypass_actors = [
+      { actor_type = "OrganizationAdmin", bypass_mode = "always" },
+      { actor_type = "RepositoryRole", actor_id = 5, bypass_mode = "always" },
+    ]
+  }
+
+  assert {
+    condition     = length(github_repository_ruleset.default_branch[0].bypass_actors) == 2
+    error_message = "Both bypass actors expected."
+  }
+
+  assert {
+    condition     = github_repository_ruleset.default_branch[0].bypass_actors[0].actor_id == null
+    error_message = "OrganizationAdmin has no actor ID."
+  }
+
+  assert {
+    condition     = github_repository_ruleset.default_branch[0].rules[0].pull_request[0].allowed_merge_methods == tolist(["squash"])
+    error_message = "Pull requests must squash, the only merge method the repository allows."
   }
 }
