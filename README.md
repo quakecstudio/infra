@@ -148,11 +148,6 @@ parameter names in `terraform.tfvars`:
 - environment secrets: `github_secrets` in `dev` / `prod`
 - repository secrets: `repository_secrets` in `github`
 
-- `editor`'s `release` environment: the Apple signing secrets, at the fixed
-  parameter names in `environments/github/main.tf`. Its Azure Trusted Signing
-  secrets come from smoketurner-infra's `azure` state instead, so planning
-  `github` also needs the `root-admin` AWS profile.
-
 The values end up in Terraform state, which is encrypted in the S3 backend.
 The site deploy itself needs no secrets: it authenticates to AWS with OIDC.
 
