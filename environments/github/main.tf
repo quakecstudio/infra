@@ -132,3 +132,47 @@ module "repository" {
     if s.repo == each.key
   }
 }
+
+locals {
+  azure = data.terraform_remote_state.azure.outputs
+
+  # Apple values originate outside Terraform; create each SSM parameter first.
+  apple_signing_parameters = {
+    APPLE_CERTIFICATE_P12_BASE64 = "/quakecstudio/github/editor/release/apple-certificate-p12-base64"
+    APPLE_CERTIFICATE_PASSWORD   = "/quakecstudio/github/editor/release/apple-certificate-password"
+    APPLE_CERTIFICATE_NAME       = "/quakecstudio/github/editor/release/apple-certificate-name"
+    MACOS_KEYCHAIN_PASSWORD      = "/quakecstudio/github/editor/release/macos-keychain-password"
+    APPLE_ID                     = "/quakecstudio/github/editor/release/apple-id"
+    APPLE_ID_PASSWORD            = "/quakecstudio/github/editor/release/apple-id-password"
+    APPLE_TEAM_ID                = "/quakecstudio/github/editor/release/apple-team-id"
+  }
+}
+
+data "aws_ssm_parameter" "apple_signing" {
+  for_each = local.apple_signing_parameters
+
+  name            = each.value
+  with_decryption = true
+}
+
+# Release signing secrets, named as in quack's and vouch's release workflows.
+# The Azure ones are consumed by skeeto/aas-sign through the federated
+# credential, whose custom OIDC subject omits the environment, so running the
+# release job in this environment still matches it.
+module "editor_release" {
+  source = "../../modules/github-environment"
+
+  repository  = module.repository["editor"].name
+  environment = "release"
+
+  secrets = merge(
+    { for name, _ in local.apple_signing_parameters : name => data.aws_ssm_parameter.apple_signing[name].value },
+    {
+      AZURE_CLIENT_ID          = local.azure.signing_client_id
+      AZURE_TENANT_ID          = local.azure.signing_tenant_id
+      CERTIFICATE_PROFILE      = local.azure.signing_profile
+      TRUSTED_SIGNING_ACCOUNT  = local.azure.signing_account
+      TRUSTED_SIGNING_ENDPOINT = local.azure.signing_endpoint
+    },
+  )
+}
