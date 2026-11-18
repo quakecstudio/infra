@@ -19,5 +19,17 @@ terraform {
       source  = "integrations/github"
       version = "~> 6.13"
     }
+    gpg = {
+      source  = "terraform-provider-gpg/gpg"
+      version = "~> 0.2.1"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.9"
+    }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.4"
+    }
   }
 }

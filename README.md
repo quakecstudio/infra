@@ -2,12 +2,16 @@
 
 Terraform for the QuakeC Studio website: a private S3 bucket served through
 CloudFront. The page itself lives in
-[`quakecstudio/site`](https://github.com/quakecstudio/site).
+[`quakecstudio/site`](https://github.com/quakecstudio/site). It also serves
+the package repository at packages.quakecstudio.com and manages the
+organization's GitHub repositories.
 
 ```
 modules/
 ├── static-site/          # S3 bucket + CloudFront (OAC), security headers,
 │                         # optional ACM cert + Route 53 records
+├── packages/             # APT and YUM/DNF repository: S3 bucket + CloudFront,
+│                         # ACM cert, Route 53 records, OIDC publish role
 ├── visit-counter/        # Lambda + DynamoDB visitor counter at /api/visit
 ├── github-oidc/          # GitHub Actions OIDC provider + per-environment deploy roles
 ├── github-environment/   # GitHub Environment, deploy branch rules, Actions
@@ -19,12 +23,14 @@ environments/
 │                         # OIDC provider and deploy roles
 ├── github/               # organization profile and every quakecstudio repository
 ├── dev/                  # site + its "dev" GitHub Environment in quakecstudio/site
-└── prod/                 # site + its "prod" GitHub Environment
+└── prod/                 # site + its "prod" GitHub Environment, and
+                          # packages.quakecstudio.com
 ```
 
 Each environment is its own Terraform root with its own state. Apply
 `global` first: `dev` and `prod` look up the deploy roles and hosted zone it
-creates.
+creates. Apply `github` before `prod`, which looks up the `packages`
+repository.
 
 ## Requirements
 
@@ -88,6 +94,63 @@ account's concurrency quota is still the new-account default of 10, the
 reservation fails: request an increase under Service Quotas → AWS Lambda →
 Concurrent executions before applying.
 
+## Packages
+
+`prod` runs `modules/packages` for `packages.quakecstudio.com`, the APT and
+YUM/DNF repository: a private S3 bucket behind CloudFront, with its own ACM
+certificate and `A`/`AAAA` aliases. The packages and their signed metadata
+live in [`quakecstudio/packages`](https://github.com/quakecstudio/packages),
+whose workflow syncs the checkout to the bucket and invalidates the cache on
+every push to `main`. Request paths reach S3 unchanged, since APT and DNF
+fetch extensionless files such as `dists/stable/InRelease`.
+
+The workflow assumes the `quakecstudio-packages-publish` role through OIDC.
+The role only trusts runs on `main` of that repository, identified by its
+immutable owner and repository IDs, and can only write to the bucket and
+invalidate the distribution. `prod` sets what the workflow reads on the
+repository:
+
+| Name                       | Kind     | Source           |
+| -------------------------- | -------- | ---------------- |
+| `ASSUME_ROLE_ARN`          | secret   | the publish role |
+| `PACKAGES_BUCKET`          | variable | the bucket       |
+| `PACKAGES_DISTRIBUTION_ID` | variable | the distribution |
+
+### Release secrets
+
+`environments/github` creates everything the editor's release workflow needs
+to publish, as Actions secrets on `quakecstudio/editor`:
+
+| Secret                               | What it is                                              |
+| ------------------------------------ | ------------------------------------------------------- |
+| `PACKAGES_DEPLOY_KEY`                | SSH private key with write access to `packages`         |
+| `HOMEBREW_TAP_DEPLOY_KEY`            | SSH private key with write access to `homebrew-tap`     |
+| `GPG_PRIVATE_KEY`, `GPG_PASSPHRASE`  | key that signs the RPMs and the repository metadata     |
+
+Terraform generates each key pair. The SSH public halves are deploy keys on
+the two repositories; the workflow checks them out with `ssh-key` and pushes
+to `main`. Pushes made with a deploy key start the target repository's
+workflows, which a `GITHUB_TOKEN` push would not. The organization has to
+allow deploy keys, a setting the GitHub provider can't manage:
+
+```sh
+gh api -X PATCH orgs/quakecstudio -F deploy_keys_enabled_for_repositories=true
+```
+
+The signing key's public
+half and fingerprint are outputs of the root, and `quakecstudio/packages`
+publishes the key as `gpg/quakecstudio.asc`:
+
+```sh
+terraform -chdir=environments/github output -raw packages_gpg_public_key \
+  > ../packages/gpg/quakecstudio.asc
+```
+
+The signing key comes from the community
+[`terraform-provider-gpg/gpg`](https://registry.terraform.io/providers/terraform-provider-gpg/gpg/latest)
+provider (Curve25519). Replacing it means every user has to trust the new
+public key.
+
 ## GitHub
 
 All GitHub configuration is managed here with the
@@ -115,14 +178,16 @@ only trusts jobs from `quakecstudio/site` running in the matching Environment.
 ### Repositories
 
 `environments/github` manages the organization's profile and member defaults
-(`organization.tf`), and the `site`, `infra`, `editor` and `.github`
-repositories: description, homepage (https://www.quakecstudio.com) and
+(`organization.tf`), and the `site`, `infra`, `editor`, `.github`,
+`tree-sitter-quakec`, `kb`, `packages` and `homebrew-tap` repositories:
+description, homepage (https://www.quakecstudio.com) and
 topics, features (issues on everywhere; wiki, projects and discussions on for
 `editor`; discussions on for `infra`), squash-only
 merges with branch deletion after merge, Dependabot alerts off, `main` as the
 default branch, and a ruleset that blocks deleting or force-pushing it and
 sends merges through a merge queue. Workflows that provide required status
-checks must also run on `merge_group`.
+checks must also run on `merge_group`. `packages` and `homebrew-tap` have no
+merge queue: the editor's release workflow pushes to `main` in both.
 Removing one from Terraform archives it rather than deleting it. Changing the
 organization settings needs the `admin:org` token scope:
 
@@ -155,5 +220,5 @@ The site deploy itself needs no secrets: it authenticates to AWS with OIDC.
 
 `.github/workflows/terraform.yml` runs `terraform fmt -check` and
 `terraform validate` for each environment, plus `terraform test` for the
-`static-site`, `visit-counter`, `github-oidc` and `github-repository`
+`static-site`, `packages`, `visit-counter`, `github-oidc` and `github-repository`
 modules against mocked providers, on pull requests and pushes to `main`. It does not plan or apply against AWS.
