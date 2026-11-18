@@ -101,11 +101,39 @@ locals {
       has_discussions = false
       merge_queue     = false
     }
+    # komac, in the editor's release workflow, pushes manifest branches here
+    # and opens pull requests against microsoft/winget-pkgs from them. Its
+    # sync-fork step updates master, so the branch is left unprotected.
+    "winget-pkgs" = {
+      description            = "Fork of microsoft/winget-pkgs that QuakeC Studio's winget manifests are submitted from"
+      topics                 = []
+      fork_of                = { owner = "microsoft", repo = "winget-pkgs" }
+      default_branch         = "master"
+      has_issues             = false
+      has_wiki               = false
+      has_projects           = false
+      has_discussions        = false
+      protect_default_branch = false
+    }
+  }
+
+  # Repository-level Actions secrets that originate outside Terraform:
+  # repository => { SECRET_NAME = "<SSM SecureString parameter name>" }. Create
+  # the parameter first, or every plan of this root fails:
+  #   aws ssm put-parameter --profile quakecstudio-admin --type SecureString \
+  #     --name /quakecstudio/github/editor/winget-token --value '...'
+  repository_secrets = {
+    editor = {
+      # Classic personal access token with the public_repo scope. komac opens
+      # pull requests on microsoft/winget-pkgs with it, which needs a user
+      # identity that has signed Microsoft's CLA.
+      WINGET_TOKEN = "/quakecstudio/github/editor/winget-token"
+    }
   }
 
   # Flatten repository => { name => parameter } for the SSM lookups.
   secret_parameters = merge([
-    for repo, secrets in var.repository_secrets : {
+    for repo, secrets in local.repository_secrets : {
       for name, parameter in secrets : "${repo}/${name}" => {
         repo      = repo
         name      = name
@@ -115,7 +143,7 @@ locals {
   ]...)
 }
 
-# Secret values live in SSM so they never appear in tfvars or the repo.
+# Secret values live in SSM so they never appear in the repo.
 data "aws_ssm_parameter" "secret" {
   for_each = local.secret_parameters
 
@@ -132,6 +160,9 @@ module "repository" {
   homepage_url           = "https://www.quakecstudio.com"
   topics                 = each.value.topics
   visibility             = lookup(each.value, "visibility", "public")
+  fork_of                = lookup(each.value, "fork_of", null)
+  default_branch         = lookup(each.value, "default_branch", "main")
+  has_issues             = lookup(each.value, "has_issues", true)
   has_wiki               = each.value.has_wiki
   has_projects           = each.value.has_projects
   has_discussions        = each.value.has_discussions
