@@ -124,9 +124,11 @@ locals {
   #     --name /quakecstudio/github/editor/winget-token --value '...'
   repository_secrets = {
     editor = {
-      # Classic personal access token with the public_repo scope. komac opens
-      # pull requests on microsoft/winget-pkgs with it, which needs a user
-      # identity that has signed Microsoft's CLA.
+      # Classic personal access token with the public_repo and workflow
+      # scopes. komac opens pull requests on microsoft/winget-pkgs with it,
+      # which needs a user identity, one that agrees to Microsoft's CLA on its
+      # first pull request; without workflow, it can't sync the fork past
+      # upstream workflow changes.
       WINGET_TOKEN = "/quakecstudio/github/editor/winget-token"
     }
   }
