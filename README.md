@@ -165,7 +165,8 @@ repository the organization doesn't own needs a user identity. It is a classic
 personal access token with the `public_repo` and `workflow` scopes (komac
 can't open the pull request with a fine-grained one, and without `workflow` it
 can't sync the fork past upstream commits that change a workflow), owned by
-`smoketurnerbot`, which must have signed Microsoft's CLA. `environments/github` gives that account write access
+`smoketurnerbot`, which agrees to Microsoft's CLA in a comment on its first
+pull request. `environments/github` gives that account write access
 to the fork; it has to accept the invitation once. The token is stored in SSM:
 
 ```sh
