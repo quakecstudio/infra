@@ -5,6 +5,11 @@ resource "github_repository" "this" {
   topics       = var.topics
   visibility   = var.visibility
 
+  # Left null, not false, for ordinary repositories so they show no diff.
+  fork         = var.fork_of != null ? true : null
+  source_owner = try(var.fork_of.owner, null)
+  source_repo  = try(var.fork_of.repo, null)
+
   has_issues      = var.has_issues
   has_wiki        = var.has_wiki
   has_projects    = var.has_projects

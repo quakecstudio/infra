@@ -50,6 +50,15 @@ variable "has_discussions" {
   default     = false
 }
 
+variable "fork_of" {
+  description = "Upstream repository to create this one as a fork of. Only takes effect when the repository is created."
+  type = object({
+    owner = string
+    repo  = string
+  })
+  default = null
+}
+
 variable "default_branch" {
   description = "Default branch. It must already exist."
   type        = string

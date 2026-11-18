@@ -3,9 +3,3 @@ variable "aws_region" {
   type        = string
   default     = "us-east-1"
 }
-
-variable "repository_secrets" {
-  description = "Repository-level Actions secrets: repository => { SECRET_NAME = \"<SSM SecureString parameter name>\" }."
-  type        = map(map(string))
-  default     = {}
-}

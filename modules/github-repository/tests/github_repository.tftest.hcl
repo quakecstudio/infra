@@ -42,6 +42,30 @@ run "defaults" {
   }
 }
 
+run "fork" {
+  command = plan
+
+  variables {
+    fork_of        = { owner = "microsoft", repo = "winget-pkgs" }
+    default_branch = "master"
+  }
+
+  assert {
+    condition     = github_repository.this.fork == "true"
+    error_message = "Repository should be created as a fork."
+  }
+
+  assert {
+    condition     = github_repository.this.source_owner == "microsoft" && github_repository.this.source_repo == "winget-pkgs"
+    error_message = "Fork should point at the upstream repository."
+  }
+
+  assert {
+    condition     = github_branch_default.this.branch == "master"
+    error_message = "Fork should keep the upstream default branch."
+  }
+}
+
 run "pull_requests_and_secrets" {
   command = plan
 
