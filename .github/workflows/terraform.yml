@@ -45,7 +45,7 @@ jobs:
 
       - name: Test modules (mocked providers)
         run: |
-          for dir in modules/static-site modules/visit-counter modules/github-oidc modules/github-repository; do
+          for dir in modules/static-site modules/packages modules/visit-counter modules/github-oidc modules/github-repository; do
             echo "::group::$dir"
             terraform -chdir="$dir" init -input=false
             terraform -chdir="$dir" test

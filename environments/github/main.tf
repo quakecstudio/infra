@@ -47,14 +47,12 @@ locals {
         "Clippy",
         "Dependency Review",
         "Format",
-        "Pinned Actions",
         "Test Assets (linux)",
         "Test Assets (macos)",
         "Test Assets (windows)",
         "Unit Tests (linux)",
         "Unit Tests (macos)",
         "Unit Tests (windows)",
-        "zizmor",
       ]
     }
     ".github" = {
@@ -84,6 +82,24 @@ locals {
       # Rulesets and auto-merge need a paid plan on private repositories.
       protect_default_branch = false
       allow_auto_merge       = false
+    }
+    # The editor's release workflow pushes straight to main in both of these
+    # with a fine-grained token, so neither uses a merge queue or pull requests.
+    packages = {
+      description     = "QuakeC Studio APT and YUM/DNF package repository"
+      topics          = ["quake", "quakec", "apt", "debian", "rpm"]
+      has_wiki        = false
+      has_projects    = false
+      has_discussions = false
+      merge_queue     = false
+    }
+    "homebrew-tap" = {
+      description     = "Homebrew tap for QuakeC Studio"
+      topics          = ["quake", "quakec", "homebrew", "homebrew-tap"]
+      has_wiki        = false
+      has_projects    = false
+      has_discussions = false
+      merge_queue     = false
     }
   }
 
