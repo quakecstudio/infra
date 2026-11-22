@@ -1,15 +1,6 @@
 # Account-wide resources. Apply this root before dev and prod: they use
 # the deploy roles and hosted zone created here.
 
-locals {
-  tags = {
-    Project     = "quakecstudio"
-    Environment = "global"
-    ManagedBy   = "terraform"
-    Repository  = "quakecstudio/infra"
-  }
-}
-
 module "github_oidc" {
   source = "../../modules/github-oidc"
 

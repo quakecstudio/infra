@@ -1,13 +1,6 @@
 # TLS certificate for custom domains. CloudFront only accepts certificates
 # from us-east-1, hence the aliased provider.
 
-locals {
-  custom_domain = length(var.domain_names) > 0
-
-  # One certificate covers the site and its redirect hostnames.
-  certificate_names = concat(var.domain_names, var.redirect_domain_names)
-}
-
 resource "aws_acm_certificate" "site" {
   count    = local.custom_domain ? 1 : 0
   provider = aws.us_east_1
@@ -25,14 +18,6 @@ resource "aws_acm_certificate" "site" {
       error_message = "route53_zone_id is required when domain_names is set."
     }
   }
-}
-
-# Keyed by the configured hostnames (known at plan time) rather than by the
-# certificate's validation options (known only after the cert exists).
-locals {
-  cert_validation_options = local.custom_domain ? {
-    for dvo in aws_acm_certificate.site[0].domain_validation_options : dvo.domain_name => dvo
-  } : {}
 }
 
 resource "aws_route53_record" "cert_validation" {

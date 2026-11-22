@@ -1,16 +1,3 @@
-locals {
-  project     = "quakecstudio"
-  environment = "prod"
-  name        = "${local.project}-${local.environment}"
-
-  tags = {
-    Project     = local.project
-    Environment = local.environment
-    ManagedBy   = "terraform"
-    Repository  = "quakecstudio/infra"
-  }
-}
-
 module "site" {
   source = "../../modules/static-site"
 
@@ -42,14 +29,6 @@ module "visit_counter" {
   # The account's Lambda concurrency quota is 10, all of which must stay
   # unreserved. Set back to 5 once the quota increase is granted.
   reserved_concurrency = null
-}
-
-# Secret values live in SSM so they never appear in tfvars or the repo.
-data "aws_ssm_parameter" "github_secret" {
-  for_each = var.github_secrets
-
-  name            = each.value
-  with_decryption = true
 }
 
 module "github_environment" {

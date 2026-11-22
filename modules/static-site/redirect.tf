@@ -3,18 +3,6 @@
 # primary domain; CloudFront adds HTTPS in front of it, which S3 website
 # endpoints don't support.
 
-locals {
-  redirect_enabled   = length(var.redirect_domain_names) > 0
-  redirect_origin_id = "s3-website-redirect"
-
-  redirect_alias_records = local.redirect_enabled ? {
-    for pair in setproduct(var.redirect_domain_names, ["A", "AAAA"]) : "${pair[0]}-${pair[1]}" => {
-      name = pair[0]
-      type = pair[1]
-    }
-  } : {}
-}
-
 # Holds no objects. Redirect-all website hosting doesn't read the bucket, so it
 # stays fully private.
 resource "aws_s3_bucket" "redirect" {

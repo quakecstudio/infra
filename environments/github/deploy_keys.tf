@@ -7,14 +7,6 @@
 # The organization must allow deploy keys, which the GitHub provider can't set:
 #   gh api -X PATCH orgs/quakecstudio -F deploy_keys_enabled_for_repositories=true
 
-locals {
-  # Secret on quakecstudio/editor => repository its release workflow pushes to.
-  release_deploy_keys = {
-    PACKAGES_DEPLOY_KEY     = "packages"
-    HOMEBREW_TAP_DEPLOY_KEY = "homebrew-tap"
-  }
-}
-
 resource "tls_private_key" "release" {
   for_each = local.release_deploy_keys
 

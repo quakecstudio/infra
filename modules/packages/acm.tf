@@ -12,14 +12,6 @@ resource "aws_acm_certificate" "packages" {
   }
 }
 
-# Keyed by the configured hostname (known at plan time) rather than by the
-# certificate's validation options (known only after the cert exists).
-locals {
-  cert_validation_options = {
-    for dvo in aws_acm_certificate.packages.domain_validation_options : dvo.domain_name => dvo
-  }
-}
-
 resource "aws_route53_record" "cert_validation" {
   zone_id         = var.route53_zone_id
   name            = local.cert_validation_options[var.domain_name].resource_record_name
