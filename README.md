@@ -4,7 +4,7 @@ Terraform for the QuakeC Studio website: a private S3 bucket served through
 CloudFront. The page itself lives in
 [`quakecstudio/site`](https://github.com/quakecstudio/site). It also serves
 the package repository at packages.quakecstudio.com and manages the
-organization's GitHub repositories.
+organization's GitHub repositories and its Discord server.
 
 ```
 modules/
@@ -22,6 +22,7 @@ environments/
 ├── global/               # account-wide: quakecstudio.com hosted zone, GitHub
 │                         # OIDC provider and deploy roles
 ├── github/               # organization profile and every quakecstudio repository
+├── discord/              # the QuakeC Studio Discord server
 ├── dev/                  # site + its "dev" GitHub Environment in quakecstudio/site
 └── prod/                 # site + its "prod" GitHub Environment, and
                           # packages.quakecstudio.com
@@ -38,7 +39,7 @@ repository.
 - AWS provider ~> 6.0
 - A GitHub token that can administer the `quakecstudio` repositories, in
   `GITHUB_TOKEN` (e.g. `GITHUB_TOKEN=$(gh auth token)`), for every root
-  except `global`
+  except `global` and `discord`
 - The `quakecstudio-admin` AWS profile
 
 State is stored in the `terraform-state-663345616657-us-east-1-an` S3 bucket
@@ -247,6 +248,49 @@ parameter names:
 
 The values end up in Terraform state, which is encrypted in the S3 backend.
 The site deploy itself needs no secrets: it authenticates to AWS with OIDC.
+
+## Discord
+
+`environments/discord` manages the QuakeC Studio Discord server
+(`1573736194028609587`) with the
+[`smoketurner/discord`](https://registry.terraform.io/providers/smoketurner/discord/latest)
+provider: server settings, the `@everyone` permissions, the `Maintainer` and
+`Contributor` roles, the channel layout and its permission overwrites, and a
+permanent invite (the `invite_url` output). Don't change these in the Discord
+client.
+
+Discord doesn't let bots create servers or applications, so the server, the
+bot and its token are set up by hand, once:
+
+1. In the [Developer Portal](https://discord.com/developers/applications),
+   create an application named `QuakeC Studio`. On **Installation**, set
+   **Install Link** to `None` (a private application can't have one). On
+   **Bot**, turn off **Public Bot**, then **Reset Token** and copy the token.
+2. On **OAuth2 → URL Generator**, select the `bot` scope and the
+   `Administrator` permission, open the generated URL and add the bot to the
+   server. Without Administrator, the bot can only grant permissions it holds
+   and can't set `MANAGE_ROLES` in overwrites.
+3. In the server's **Roles** settings, drag the bot's role (named after the
+   application) to the top, so it sits above every role Terraform manages.
+4. Store the token in SSM:
+
+   ```sh
+   aws ssm put-parameter --profile quakecstudio-admin --type SecureString \
+     --name /quakecstudio/discord/bot-token --value '...'
+   ```
+
+Then:
+
+```sh
+make init ENV=discord
+make plan ENV=discord
+make apply ENV=discord
+```
+
+The channels Discord creates with a new server (`Text Channels`, `#general`,
+`Voice Channels`, `General`) aren't managed; delete them in the client after
+the first apply. To rotate the token, reset it on the Bot page and overwrite
+the parameter with `--overwrite`.
 
 ## CI
 
