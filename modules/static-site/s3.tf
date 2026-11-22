@@ -1,14 +1,5 @@
 # Private origin bucket. Only the CloudFront distribution can read it.
 
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
-
-locals {
-  # Buckets live in the account-regional namespace, which only this account
-  # can create names in: <prefix>-<account-id>-<region>-an.
-  bucket_suffix = "${data.aws_caller_identity.current.account_id}-${data.aws_region.current.region}-an"
-}
-
 resource "aws_s3_bucket" "site" {
   bucket           = "${var.name}-${local.bucket_suffix}"
   bucket_namespace = "account-regional"
@@ -70,43 +61,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "site" {
   }
 
   depends_on = [aws_s3_bucket_versioning.site]
-}
-
-data "aws_iam_policy_document" "site_bucket" {
-  statement {
-    sid       = "AllowCloudFrontRead"
-    actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.site.arn}/*"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["cloudfront.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "AWS:SourceArn"
-      values   = [aws_cloudfront_distribution.site.arn]
-    }
-  }
-
-  statement {
-    sid       = "DenyInsecureTransport"
-    effect    = "Deny"
-    actions   = ["s3:*"]
-    resources = [aws_s3_bucket.site.arn, "${aws_s3_bucket.site.arn}/*"]
-
-    principals {
-      type        = "*"
-      identifiers = ["*"]
-    }
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["false"]
-    }
-  }
 }
 
 resource "aws_s3_bucket_policy" "site" {

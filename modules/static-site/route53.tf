@@ -1,14 +1,5 @@
 # Alias records pointing each custom hostname at the distribution.
 
-locals {
-  alias_records = local.custom_domain ? {
-    for pair in setproduct(var.domain_names, ["A", "AAAA"]) : "${pair[0]}-${pair[1]}" => {
-      name = pair[0]
-      type = pair[1]
-    }
-  } : {}
-}
-
 resource "aws_route53_record" "site" {
   for_each = local.alias_records
 

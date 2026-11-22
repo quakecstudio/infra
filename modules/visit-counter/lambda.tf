@@ -1,38 +1,7 @@
-data "archive_file" "function" {
-  type        = "zip"
-  source_file = "${path.module}/src/index.mjs"
-  output_path = "${path.module}/.build/visit-counter.zip"
-}
-
-data "aws_iam_policy_document" "assume" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
-    }
-  }
-}
-
 resource "aws_iam_role" "function" {
   name               = "${var.name}-visit-counter"
   assume_role_policy = data.aws_iam_policy_document.assume.json
   tags               = var.tags
-}
-
-data "aws_iam_policy_document" "function" {
-  statement {
-    sid       = "Counter"
-    actions   = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
-    resources = [aws_dynamodb_table.counter.arn]
-  }
-
-  statement {
-    sid       = "Logs"
-    actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
-    resources = ["${aws_cloudwatch_log_group.function.arn}:*"]
-  }
 }
 
 resource "aws_iam_role_policy" "function" {

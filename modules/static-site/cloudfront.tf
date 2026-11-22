@@ -1,7 +1,3 @@
-data "aws_cloudfront_cache_policy" "caching_optimized" {
-  name = "Managed-CachingOptimized"
-}
-
 resource "aws_cloudfront_origin_access_control" "site" {
   name                              = var.name
   description                       = "Origin access for ${var.name}"

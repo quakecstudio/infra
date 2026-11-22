@@ -1,21 +1,5 @@
 # Optional Lambda function URL origin for /api/*.
 
-locals {
-  api_enabled   = var.api_origin != null
-  api_origin_id = "lambda-api"
-}
-
-data "aws_cloudfront_cache_policy" "caching_disabled" {
-  count = local.api_enabled ? 1 : 0
-  name  = "Managed-CachingDisabled"
-}
-
-# Forwards everything except Host, which must be the function URL's own.
-data "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
-  count = local.api_enabled ? 1 : 0
-  name  = "Managed-AllViewerExceptHostHeader"
-}
-
 resource "aws_cloudfront_origin_access_control" "api" {
   count = local.api_enabled ? 1 : 0
 
